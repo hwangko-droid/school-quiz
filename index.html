@@ -651,6 +651,16 @@ let score = 0;
 let startTime = null;
 let timerInterval = null;
 let lbPollInterval = null;
+let currentShuffledAnswer = 0;
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 /* ──────────────────────────────────────────
    Timer helpers
@@ -715,10 +725,14 @@ function loadQuestion(idx) {
   document.getElementById('progressNum').textContent = `${idx} / ${TOTAL}`;
   updateSectionTag(idx);
 
-  // Options
+  // Options (shuffled)
+  const shuffledIndices = shuffleArray([0,1,2,3,4]);
+  const shuffledOptions = shuffledIndices.map(i => q.options[i]);
+  currentShuffledAnswer = shuffledIndices.indexOf(q.answer);
+
   const container = document.getElementById('optionsContainer');
   container.innerHTML = '';
-  q.options.forEach((opt, i) => {
+  shuffledOptions.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'option-btn';
     btn.innerHTML = `<span class="option-letter">${LETTERS[i]}</span><span>${opt}</span>`;
@@ -736,16 +750,16 @@ function selectAnswer(chosen, btn) {
 
   btns.forEach(b => b.disabled = true);
 
-  if (chosen === q.answer) {
+  if (chosen === currentShuffledAnswer) {
     btn.classList.add('correct');
     score++;
   } else {
     btn.classList.add('wrong');
-    btns[q.answer].classList.add('correct');
+    btns[currentShuffledAnswer].classList.add('correct');
   }
 
   btns.forEach((b, i) => {
-    if (i !== chosen && i !== q.answer) b.classList.add('dimmed');
+    if (i !== chosen && i !== currentShuffledAnswer) b.classList.add('dimmed');
   });
 
   if (q.explain) {
