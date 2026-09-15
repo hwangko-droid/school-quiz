@@ -3,16 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>학교폭력 예방 퀴즈</title>
+<title>학교폭력 예방교육 퀴즈</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600&display=swap">
 
-<!-- =====================================================
-  ★ 선생님 설정 (여기만 바꾸면 됩니다)
-
-  1. supabase.com → 프로젝트 생성
-  2. Settings → API 에서 아래 두 값 복사해서 붙여넣기
-===================================================== -->
 <script>
   const SUPABASE_URL = 'https://pkslwnwjdxczxyhulfqj.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrc2x3bndqZHhjenh5aHVsZnFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjU4NjksImV4cCI6MjEwNDk0MTg2OX0.nxNBOrli8GCRvUgyBhX4UErN67sVnIpF44Qz-URSOiM';
@@ -59,25 +53,28 @@
     align-items: center; padding-block: 2.5rem; padding-inline: 1rem;
   }
 
-  /* Setup Banner */
-  .setup-banner {
-    width: 100%; max-width: 640px; margin-bottom: 1rem;
-    padding: 0.85rem 1rem; background: #FFF3CD; border: 1.5px solid #F0C040;
-    border-radius: 10px; font-size: 0.85rem; color: #5D4037; line-height: 1.5;
-  }
-  .setup-banner strong { color: #BF360C; }
-
   /* Header */
   .quiz-header { width: 100%; max-width: 640px; margin-bottom: 1.5rem; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
   .header-label {
     font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--primary);
-    margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
   }
   .header-label::before {
     content: ''; display: inline-block; width: 6px; height: 6px;
     background: var(--accent); border-radius: 50%;
   }
+  .section-tag {
+    font-size: 0.7rem; font-weight: 600; padding: 0.18rem 0.55rem;
+    background: var(--primary); color: #fff; border-radius: 99px;
+    letter-spacing: 0.04em; transition: opacity 0.3s;
+  }
+  .timer-display {
+    font-size: 0.78rem; font-weight: 600; color: var(--muted);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.05em;
+  }
+  .timer-display.running { color: var(--accent); }
   .progress-row { display: flex; align-items: center; gap: 0.75rem; }
   .progress-bar { flex: 1; height: 6px; background: var(--progress-track); border-radius: 99px; overflow: hidden; }
   .progress-fill {
@@ -164,11 +161,17 @@
     color: var(--text); line-height: 1;
   }
   .score-denom { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+  .result-meta { display: flex; flex-direction: column; gap: 0.25rem; }
   .result-title {
     font-family: 'Noto Serif KR', serif; font-size: 1.15rem; font-weight: 700;
-    color: var(--text); margin-bottom: 0.3rem;
+    color: var(--text);
   }
   .result-sub { font-size: 0.88rem; color: var(--muted); line-height: 1.55; }
+  .result-time {
+    font-size: 0.85rem; color: var(--primary); font-weight: 600;
+    display: flex; align-items: center; gap: 0.35rem; margin-top: 0.2rem;
+  }
+  .result-time::before { content: '⏱'; font-size: 0.85rem; }
   .divider { border: none; border-top: 1.5px solid var(--border); margin-block: 1.4rem; }
 
   /* Submit form */
@@ -232,10 +235,12 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .lb-id { font-size: 0.76rem; color: var(--muted); margin-top: 1px; }
+  .lb-right { text-align: right; }
   .lb-score {
     font-family: 'Noto Serif KR', serif; font-size: 1.05rem; font-weight: 700;
     color: var(--accent); white-space: nowrap; font-variant-numeric: tabular-nums;
   }
+  .lb-time { font-size: 0.72rem; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .lb-empty {
     text-align: center; color: var(--muted); font-size: 0.88rem;
     padding: 1.2rem; border: 1.5px dashed var(--border); border-radius: 10px;
@@ -263,18 +268,17 @@
 </head>
 <body>
 
-<!-- Setup notice (자동으로 사라짐) -->
-<div class="setup-banner hidden" id="setupBanner">
-  ⚠️ <strong>선생님 설정 필요:</strong>
-  HTML 파일 상단의 <code>SUPABASE_URL</code>과 <code>SUPABASE_KEY</code>를 실제 값으로 교체하면 순위 기능이 활성화됩니다.
-  퀴즈 자체는 지금도 정상 작동합니다.
-</div>
-
 <div class="quiz-header">
-  <div class="header-label">학교폭력 예방교육</div>
+  <div class="header-top">
+    <div class="header-label">학교폭력 예방교육</div>
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <span class="section-tag" id="sectionTag">Section 1</span>
+      <span class="timer-display" id="timerDisplay">00:00</span>
+    </div>
+  </div>
   <div class="progress-row">
     <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <div class="progress-num" id="progressNum">0 / 10</div>
+    <div class="progress-num" id="progressNum">0 / 40</div>
   </div>
 </div>
 
@@ -298,12 +302,13 @@
       </svg>
       <div class="score-label">
         <span class="score-num" id="scoreNum">0</span>
-        <span class="score-denom">/ 10점</span>
+        <span class="score-denom">/ 40점</span>
       </div>
     </div>
-    <div>
+    <div class="result-meta">
       <div class="result-title" id="resultTitle"></div>
       <div class="result-sub"   id="resultSub"></div>
+      <div class="result-time"  id="resultTime"></div>
     </div>
   </div>
 
@@ -341,85 +346,274 @@
     </div>
   </div>
 
-  <button class="restart-btn" id="restartBtn">다시 풀기</button>
+  <button class="restart-btn" id="restartBtn">다시 풀기 🔄</button>
 </div>
 
 <script>
 /* ──────────────────────────────────────────
-   문제 데이터
+   문제 데이터 (40문제 × 5지선다)
 ────────────────────────────────────────── */
-const QUESTIONS = [
-  {
-    q: "다음 중 학교폭력에 해당하지 않는 것은?",
-    options: ["친구에게 돈을 빌리고 고의로 갚지 않는 행위","단체 카톡방에서 특정 학생을 의도적으로 무시하는 행위","복도에서 어깨를 가볍게 스치며 지나가는 행위","별명을 반복 사용하여 모욕감을 주는 행위"],
-    answer: 2,
-    explain: "학교폭력은 의도성과 지속성이 중요한 요소입니다. 복도에서 우연히 어깨를 스치는 행위는 의도적 가해가 아니므로 학교폭력에 해당하지 않습니다."
-  },
-  {
-    q: "학교폭력 신고 전화번호는 무엇인가요?",
-    options: ["112 (경찰)","117 (학교폭력 전담)","119 (소방·응급)","182 (경찰청민원)"],
-    answer: 1,
-    explain: "117은 학교폭력 전담 신고 번호입니다. 24시간 운영되며 피해 학생뿐 아니라 목격자도 신고할 수 있습니다."
-  },
-  {
-    q: "다음 중 '사이버폭력'에 해당하지 않는 것은?",
-    options: ["단체 채팅방에서 욕설과 협박 메시지를 반복 전송","동의 없이 촬영한 사진을 SNS에 유포","온라인 게임에서 상대방에게 지는 것","악성 댓글을 지속적으로 달아 모욕감을 주는 행위"],
-    answer: 2,
-    explain: "게임에서 지는 것은 자연스러운 결과입니다. 사이버폭력은 정보통신기기를 이용하여 의도적·지속적으로 상대방에게 고통을 주는 행위입니다."
-  },
-  {
-    q: "친구가 폭력 피해를 입고 있다는 것을 알게 되었을 때 가장 적절한 행동은?",
-    options: ["나와 상관없는 일이니 모른 척한다","피해 학생과 함께 교사나 부모님께 알린다","가해 학생에게 직접 맞서 싸워준다","소문을 내어 가해 학생을 공개적으로 비난한다"],
-    answer: 1,
-    explain: "목격자의 신고는 학교폭력 해결에 매우 중요합니다. 직접 대결은 위험을 키울 수 있으므로 신뢰할 수 있는 어른에게 알리는 것이 바람직합니다."
-  },
-  {
-    q: "학교폭력 피해를 당했을 때 가장 먼저 해야 할 행동은?",
-    options: ["스스로 해결하려고 참고 기다린다","보복이 두려워 혼자 견딘다","부모님이나 교사 등 신뢰할 수 있는 어른에게 알린다","학교를 결석하여 가해자를 피한다"],
-    answer: 2,
-    explain: "혼자 해결하려 하면 피해가 지속·악화될 수 있습니다. 즉시 신뢰할 수 있는 어른에게 알리는 것이 가장 중요한 첫걸음입니다."
-  },
-  {
-    q: "다음 중 '관계적 폭력(따돌림)'에 해당하는 행동은?",
-    options: ["신체를 직접 때리거나 밀치는 행위","점심시간마다 특정 학생을 의도적으로 혼자 앉게 만드는 행위","위협적인 문자 메시지를 보내는 행위","금품을 빼앗거나 강요하는 행위"],
-    answer: 1,
-    explain: "관계적 폭력은 고의로 특정 학생을 집단에서 배제하거나 따돌리는 행위입니다. 신체 접촉 없이도 심각한 정신적 피해를 줄 수 있습니다."
-  },
-  {
-    q: "학교폭력예방법상 '학교폭력'이 발생할 수 있는 장소로 옳은 것은?",
-    options: ["학교 건물 내부에서만 해당된다","학교 안팎을 불문하고 학생 간에 발생하면 해당된다","교사가 현장에 있을 때만 인정된다","정규 수업 시간 중에만 해당된다"],
-    answer: 1,
-    explain: "학교폭력예방법 제2조에 따르면 학교 내외에서 학생을 대상으로 발생한 폭력 행위가 모두 해당됩니다. 장소나 시간에 관계없이 학생 간 폭력은 학교폭력입니다."
-  },
-  {
-    q: "학교폭력 가해 학생에게 취해질 수 있는 조치가 아닌 것은?",
-    options: ["학교에서의 봉사 또는 사회봉사","특별교육 이수 및 심리치료","피해 학생에 대한 접촉·협박·보복 금지","피해 학생의 성적 및 개인정보 공개"],
-    answer: 3,
-    explain: "피해 학생의 성적과 개인정보를 공개하는 것은 법적으로 허용되지 않습니다. 학교폭력예방법은 가해 학생 조치를 규정하지만 피해 학생의 프라이버시는 철저히 보호됩니다."
-  },
-  {
-    q: "학교폭력 예방에 가장 효과가 낮은 행동은?",
-    options: ["학급 내 서로 존중하는 분위기 형성하기","폭력을 목격했을 때 방관하지 않고 신고하기","강한 학생에게 복종하면 나는 안전하다고 여기기","주변 친구들의 감정 변화에 관심 갖기"],
-    answer: 2,
-    explain: "강한 학생에게 복종하는 태도는 폭력 구조를 강화합니다. 서로 존중하고 폭력을 방관하지 않는 학급 문화가 진정한 예방입니다."
-  },
-  {
-    q: "폭력 상황을 목격한 '방관자'가 취할 수 있는 가장 바람직한 행동은?",
-    options: ["폭력 장면을 재미로 구경하거나 영상으로 찍는다","가해자 편에 서서 피해자를 함께 비난한다","117이나 교사에게 즉시 알린다","상황이 끝날 때까지 자리를 피해 관여하지 않는다"],
-    answer: 2,
-    explain: "방관을 선택하는 것은 암묵적으로 가해를 허용하는 것입니다. 직접 개입이 위험하다면 즉시 117이나 교사에게 알리는 것이 가장 효과적입니다."
-  }
+const SECTIONS = [
+  { label: 'Section 1', title: '학교폭력 예방', range: [0, 9] },
+  { label: 'Section 2', title: '도박 예방',     range: [10, 19] },
+  { label: 'Section 3', title: '학교 규칙',     range: [20, 29] },
+  { label: 'Section 4', title: '금연·안전',     range: [30, 39] },
 ];
 
-const LETTERS = ['①','②','③','④'];
-const MEDALS  = ['🥇','🥈','🥉','4위','5위'];
+const QUESTIONS = [
+  /* ─── Section 1: 학교폭력 예방 ─── */
+  {
+    q: "다음 중 학교폭력에 해당하지 않는 행동은?",
+    options: ["친구에게 욕설과 모욕적인 말을 반복적으로 한다","SNS에서 특정 학생을 집단으로 따돌리는 행위를 한다","친구와 의견 충돌로 한 번 말다툼을 한다","친구의 물건을 허락 없이 빼앗는다","특정 학생에게 의도적으로 신체적 위해를 가한다"],
+    answer: 2,
+    explain: "학교폭력은 '의도성'과 '지속성'이 핵심 요소입니다. 단순한 의견 충돌로 한 번 다툰 것은 의도적·반복적 가해가 아니므로 학교폭력에 해당하지 않습니다."
+  },
+  {
+    q: "학교폭력을 목격했을 때 가장 올바른 대처 방법은?",
+    options: ["모른 척하고 그냥 지나친다","가해 학생에게 직접 맞서 싸워 피해자를 돕는다","친구들과 함께 지켜보며 상황을 살핀다","선생님이나 117에 즉시 신고한다","SNS에 영상을 올려 공론화한다"],
+    answer: 3,
+    explain: "학교폭력을 목격하면 즉시 신뢰할 수 있는 교사나 학교폭력 신고전화(117)에 신고하는 것이 가장 올바른 대처입니다. 직접 대결은 오히려 위험을 키울 수 있습니다."
+  },
+  {
+    q: "사이버폭력의 특징으로 바르지 않은 것은?",
+    options: ["피해가 빠른 속도로 광범위하게 퍼질 수 있다","익명성 때문에 가해자를 찾기 어렵다","24시간 언제 어디서나 발생할 수 있다","물리적 폭력이 없으므로 피해자의 고통이 적다","피해 내용이 디지털 자료로 남아 증거 수집이 가능하다"],
+    answer: 3,
+    explain: "사이버폭력은 물리적 접촉 없이도 피해자에게 심각한 정신적 고통을 줍니다. '물리적 폭력이 없으므로 피해가 적다'는 것은 잘못된 인식입니다."
+  },
+  {
+    q: "언어폭력이 피해자에게 미치는 영향으로 거리가 먼 것은?",
+    options: ["심각한 정신적 트라우마를 유발할 수 있다","대인관계 기피와 사회적 위축을 일으킨다","신체적 상처보다 회복이 빠르고 쉽다","자존감 저하와 우울감을 초래할 수 있다","오랫동안 피해자의 기억에 남아 고통을 준다"],
+    answer: 2,
+    explain: "언어폭력으로 인한 정신적 상처는 신체적 상처보다 훨씬 오래 지속되며, 회복도 더 어려울 수 있습니다. '빠르고 쉽게 회복된다'는 잘못된 인식입니다."
+  },
+  {
+    q: "장난과 학교폭력을 구분하는 가장 중요한 기준은?",
+    options: ["행동의 횟수와 빈도","당하는 사람(피해자)의 감정과 고통 여부","가해자의 의도와 동기","교사 또는 어른의 목격 여부","발생 장소가 학교 내부인지 외부인지"],
+    answer: 1,
+    explain: "장난과 학교폭력의 가장 중요한 구분 기준은 '당하는 사람이 어떻게 느끼는가'입니다. 가해자가 장난이라고 생각해도 피해자가 고통을 느낀다면 폭력이 될 수 있습니다."
+  },
+  {
+    q: "따돌림(집단 괴롭힘)에 대한 설명으로 옳은 것은?",
+    options: ["두 명 이상이 특정 학생을 의도적으로 소외시키는 행위이다","단 한 번의 무시도 따돌림에 해당된다","신체적 접촉이 있어야만 따돌림으로 인정된다","가해자와 피해자가 친한 친구 사이면 따돌림이 아니다","피해 학생이 원하면 언제든지 쉽게 벗어날 수 있다"],
+    answer: 0,
+    explain: "따돌림은 두 명 이상이 특정 학생을 의도적이고 지속적으로 소외·배제시키는 행위입니다. 신체 접촉 없이도 심각한 정신적 피해를 줄 수 있습니다."
+  },
+  {
+    q: "학교폭력 신고 전화번호로 옳은 것은?",
+    options: ["112 (경찰청)","119 (소방청)","117 (학교폭력 신고센터)","182 (경찰민원콜센터)","1388 (청소년 상담)"],
+    answer: 2,
+    explain: "117은 학교폭력 전담 신고·상담 번호입니다. 24시간 운영되며 피해 학생뿐만 아니라 목격자도 신고할 수 있습니다."
+  },
+  {
+    q: "학교폭력 피해 학생에게서 나타나는 징후가 아닌 것은?",
+    options: ["이유 없이 학교 가기를 싫어하고 결석이 잦아진다","용돈이 자주 부족하거나 물건을 잃어버린다","성적이 갑자기 향상되고 친구가 많아진다","몸에 원인 모를 상처나 멍이 생긴다","혼자 밥을 먹거나 쉬는 시간에 고립된다"],
+    answer: 2,
+    explain: "학교폭력 피해 학생은 보통 학교생활에 어려움을 겪습니다. '성적 향상 및 친구 증가'는 피해 징후가 아니며, 오히려 반대 현상(성적 하락, 고립)이 나타납니다."
+  },
+  {
+    q: "학교폭력 가해 학생에 대한 조치로 틀린 것은?",
+    options: ["피해 학생에 대한 서면 사과","피해 학생에 대한 접촉·협박 및 보복 금지","학내 봉사 또는 사회봉사 명령","특별교육 이수 또는 심리 치료","즉시 소년원 송치"],
+    answer: 4,
+    explain: "학교폭력예방법상 가해 학생 조치에는 서면 사과, 접촉 금지, 봉사, 특별교육, 출석정지, 전학, 퇴학 등이 있습니다. '즉시 소년원 송치'는 법에 규정된 학교 조치가 아닙니다."
+  },
+  {
+    q: "건강한 교우관계를 위해 필요한 태도가 아닌 것은?",
+    options: ["상대방의 말을 경청하고 공감한다","갈등이 생기면 대화로 해결하려 노력한다","내 주장을 무조건 관철시킨다","서로의 차이를 인정하고 존중한다","친구의 어려움을 함께 해결하려 노력한다"],
+    answer: 2,
+    explain: "건강한 교우관계는 상호 존중과 소통을 기반으로 합니다. '내 주장을 무조건 관철'하려는 태도는 갈등을 심화시키고 관계를 해치는 요인이 됩니다."
+  },
 
-let current = 0, score = 0, answered = false, submitted = false;
-const sbReady = SUPABASE_URL && !SUPABASE_URL.includes('YOUR_SUPABASE_URL');
+  /* ─── Section 2: 도박 예방 ─── */
+  {
+    q: "청소년 도박의 가장 큰 문제점은?",
+    options: ["도박으로 인한 시간 낭비가 많다","스마트폰을 통해 불법 스포츠 토토 등에 쉽게 접근된다","성인과 함께 있어야 참여할 수 있다","도박장 출입에 신분증 확인이 필요하다","모든 도박 사이트는 해외 서버라 국내 법 적용이 어렵다"],
+    answer: 1,
+    explain: "스마트폰의 보급으로 청소년이 불법 온라인 도박에 매우 쉽게 접근할 수 있다는 것이 가장 큰 문제입니다. 클릭 몇 번으로 누구나 참여할 수 있어 위험성이 큽니다."
+  },
+  {
+    q: "도박 중독의 초기 증상으로 가장 적절한 것은?",
+    options: ["갑자기 식욕이 없어지고 수면이 많아진다","친구들과 어울리기를 좋아하고 더 활발해진다","도박을 위해 거짓말을 하고 돈을 빌린다","공부에 집중하고 성적이 오른다","용돈을 절약하고 저금을 시작한다"],
+    answer: 2,
+    explain: "도박 중독 초기에는 도박 자금을 마련하기 위해 거짓말을 하거나 주변에 돈을 빌리는 행동이 나타납니다. 이는 중독이 심화되고 있다는 중요한 신호입니다."
+  },
+  {
+    q: "친구가 도박을 권유할 때 가장 올바른 대처 방법은?",
+    options: ["한 번쯤은 해봐도 된다고 생각하고 따라간다","모른 척하고 피한다","도박의 위험성을 단호하게 말하고 거절한다","이길 자신이 있으면 해도 된다고 생각한다","나중에 생각해보겠다고 미룬다"],
+    answer: 2,
+    explain: "도박 권유를 받았을 때는 도박의 중독성과 위험성을 설명하며 단호하게 거절해야 합니다. 모호한 거절은 결국 참여로 이어질 수 있습니다."
+  },
+  {
+    q: "도박으로 인해 발생하는 2차 범죄가 아닌 것은?",
+    options: ["도박 빚을 갚기 위한 절도","도박 자금 마련을 위한 갈취(폭행)","도박 자금을 빌려주겠다는 명목의 사기","도박 빚으로 인한 협박 및 강요","봉사활동 시간 위조"],
+    answer: 4,
+    explain: "도박 2차 범죄는 도박 빚이나 자금 마련 과정에서 발생하는 절도, 갈취, 사기, 협박 등입니다. 봉사활동 시간 위조는 도박과 직접적인 관련이 없는 별개의 문제입니다."
+  },
+  {
+    q: "청소년 도박 문제 전문 상담 전화번호는?",
+    options: ["117 (학교폭력 신고)","1336 (도박 문제 상담)","1388 (청소년 긴급전화)","1366 (여성 긴급전화)","182 (경찰 민원)"],
+    answer: 1,
+    explain: "1336은 한국도박문제관리센터 전화번호로 도박 문제 전문 상담을 제공합니다. 도박 문제로 어려움을 겪는 청소년과 가족이 언제든지 상담할 수 있습니다."
+  },
+  {
+    q: "불법 온라인 도박에 대한 설명으로 옳은 것은?",
+    options: ["신고해도 법적 처벌이 없어 안전하다","미성년자는 접근할 수 없어 안전하다","이기면 즉시 현금으로 환급받을 수 있다","청소년도 쉽게 빚을 질 수 있는 구조이다","국내 규제가 엄격해 접근이 매우 어렵다"],
+    answer: 3,
+    explain: "불법 온라인 도박은 초기 당첨금을 내어주다가 점점 큰 금액을 유도하여 청소년도 쉽게 막대한 빚을 지게 하는 구조입니다. 미성년자도 얼마든지 접근 가능합니다."
+  },
+  {
+    q: "도박의 정의로 가장 알맞은 것은?",
+    options: ["결과가 불확실한 사건에 재물을 거는 행위","단순히 운에 의해 승패가 결정되는 놀이","전략적 사고로 충분히 이길 수 있는 게임","합법적 카지노에서만 이루어지는 활동","성인만이 참여하는 오락 활동"],
+    answer: 0,
+    explain: "도박이란 결과가 불확실한 사건(우연)에 금전·재물을 걸어 승패를 겨루는 행위를 말합니다. 결과에 대한 불확실성과 재물을 거는 행위가 핵심입니다."
+  },
+  {
+    q: "도박에 빠지게 되는 심리적 요인이 아닌 것은?",
+    options: ["한 번 잃으면 반드시 만회할 수 있다는 '회복 환상'","큰 돈을 빠르게 벌 수 있다는 '일확천금' 심리","내가 상황을 통제할 수 있다는 '통제 착각'","미래에 대한 철저한 계획과 저축 심리","스릴과 흥분을 추구하는 자극 추구 심리"],
+    answer: 3,
+    explain: "도박 중독을 일으키는 심리적 요인에는 회복 환상, 일확천금 심리, 통제 착각, 자극 추구 등이 있습니다. '철저한 계획과 저축 심리'는 오히려 도박을 예방하는 건강한 태도입니다."
+  },
+  {
+    q: "도박으로 빚을 진 친구를 가장 올바르게 돕는 방법은?",
+    options: ["친구 대신 빚을 갚아준다","더 큰 돈을 빌려 한 번에 해결하도록 도와준다","비밀을 지켜주고 아무에게도 알리지 않는다","전문 기관이나 선생님께 도움을 요청하도록 설득한다","도박으로 잃은 돈을 되찾을 수 있다고 격려한다"],
+    answer: 3,
+    explain: "도박 문제는 의지만으로 해결하기 어렵습니다. 친구를 위해 대신 빚을 갚아주거나 혼자 해결하도록 두는 것은 도움이 되지 않습니다. 전문 기관(1336)이나 교사에게 연결하는 것이 바람직합니다."
+  },
+  {
+    q: "청소년이 가장 쉽게 접근할 수 있는 불법 도박 형태가 아닌 것은?",
+    options: ["불법 온라인 스포츠 베팅","소셜 카지노 게임(앱)","불법 사다리 게임","온라인 경마·경륜 불법 배팅","오프라인 강원랜드 카지노 출입"],
+    answer: 4,
+    explain: "강원랜드 카지노는 오프라인 시설로 성인만 출입 가능합니다. 반면 불법 온라인 스포츠 베팅, 소셜 카지노 앱, 사다리 게임 등은 스마트폰으로 누구나 쉽게 접근할 수 있습니다."
+  },
+
+  /* ─── Section 3: 학교 규칙 준수 ─── */
+  {
+    q: "학교 규칙(학칙)을 제정하는 목적으로 가장 알맞은 것은?",
+    options: ["교사의 권위를 높이고 학생을 통제하기 위해","학교의 이미지와 명예를 관리하기 위해","공동체의 질서 유지와 학생의 안전·인권 보호를 위해","정부의 지침을 그대로 따르기 위해","학교 평가에서 좋은 점수를 받기 위해"],
+    answer: 2,
+    explain: "학칙은 모든 구성원이 안전하고 건강하게 학교생활을 영위할 수 있도록 공동체 질서를 유지하고 학생의 안전과 인권을 보호하기 위해 제정됩니다."
+  },
+  {
+    q: "수업 중 스마트폰에 대한 올바른 태도는?",
+    options: ["필요할 때 꺼내 사용하되 소리는 끈다","이어폰을 꽂고 조용히 사용한다","책상 위에 엎어 두어 선생님이 볼 수 있게 한다","전원을 끄거나 학교 규정에 따라 보관한다","진동으로 설정해 두면 사용해도 무방하다"],
+    answer: 3,
+    explain: "수업 중 스마트폰은 학교 규정에 따라 전원을 끄거나 지정된 장소에 보관하는 것이 올바른 태도입니다. 수업 집중을 방해하는 스마트폰 사용은 학칙 위반입니다."
+  },
+  {
+    q: "학교에서 복장 규정을 지켜야 하는 이유로 가장 적절한 것은?",
+    options: ["학생다운 단정함을 유지하고 공동체 소속감을 높이기 위해","비싼 옷을 사지 않아도 되어 경제적 부담을 줄이기 위해","교사와 학생을 쉽게 구분하기 위해","다른 학교 학생들과 차별화하기 위해","외부 방문자들에게 좋은 인상을 주기 위해"],
+    answer: 0,
+    explain: "복장 규정은 학생으로서의 단정한 외양을 유지하고 학교 공동체의 소속감과 일체감을 높이기 위한 것입니다. 이는 학생 상호 간의 위화감을 줄이는 데도 도움이 됩니다."
+  },
+  {
+    q: "수업 시작 종이 울렸을 때 학생이 취해야 할 바른 행동은?",
+    options: ["복도에서 하던 대화를 마무리하고 교실로 들어간다","화장실을 다녀온 후 수업에 참여한다","자리에 앉아 수업 교재를 준비하고 기다린다","친구들과 이야기하면서 선생님이 오시길 기다린다","음식을 마저 먹고 나서 착석한다"],
+    answer: 2,
+    explain: "수업 시작 종이 울리면 교실 자리에 앉아 교과서와 필기 도구 등 수업 준비를 마치고 선생님을 기다리는 것이 바른 태도입니다."
+  },
+  {
+    q: "교사의 지도에 불응하고 대드는 행위는?",
+    options: ["학생의 정당한 의사 표현이다","교권 침해 및 학칙 위반이다","민주적 토론 문화의 일환이다","개인의 자유로운 표현이다","학교생활기록부에 기재되지 않는 경미한 사안이다"],
+    answer: 1,
+    explain: "교사의 정당한 교육 활동을 방해하거나 교사에게 대드는 행위는 교권을 침해하고 학칙을 위반하는 행위입니다. 의견이 있다면 예의 바른 방법으로 표현해야 합니다."
+  },
+  {
+    q: "학교 기물을 고의로 파손했을 때 올바른 처리 방법은?",
+    options: ["아무에게도 알리지 않고 혼자 처리한다","다른 친구가 한 것처럼 모른 척한다","선생님께 사실대로 말씀드리고 변상 등 책임을 진다","청소 시간에 몰래 정리해 버린다","피해가 드러날 때까지 기다린다"],
+    answer: 2,
+    explain: "실수로든 고의로든 학교 기물을 파손했다면 즉시 선생님께 사실대로 알리고 적절한 방법으로 책임(변상 등)을 지는 것이 올바른 자세입니다."
+  },
+  {
+    q: "복도 통행 예절로 바르지 않은 것은?",
+    options: ["우측통행 원칙을 지킨다","친구들과 장난치며 크게 뛰어다닌다","계단에서는 천천히 한 줄로 이동한다","쾌적한 환경을 위해 쓰레기를 줍는다","어른을 만나면 예의 바르게 인사한다"],
+    answer: 1,
+    explain: "복도에서 뛰거나 장난치는 행동은 다른 학생이나 교사에게 불편을 주고 안전사고를 유발할 수 있습니다. 복도는 조용히 우측통행으로 이동하는 것이 올바른 예절입니다."
+  },
+  {
+    q: "시험 중 부정행위에 대한 설명으로 옳은 것은?",
+    options: ["들키지 않으면 아무 문제가 없다","한 번쯤은 누구나 할 수 있는 실수이다","자신의 양심을 속이는 일이며 엄격한 교칙 위반이다","시험 범위가 너무 많을 때는 어쩔 수 없다","성적 압박 때문이라면 이해할 수 있다"],
+    answer: 2,
+    explain: "부정행위는 자신의 양심을 속이는 행위이며, 발각 시 해당 시험 0점 처리, 징계 등 엄격한 처벌을 받습니다. 어떤 이유로도 정당화될 수 없습니다."
+  },
+  {
+    q: "무단결석이 학생에게 미치는 영향으로 옳은 것은?",
+    options: ["출결 점수 감점 및 학교생활기록부에 불이익이 생긴다","자유로운 개인 시간이 확보된다","스트레스가 해소되어 정신 건강에 도움이 된다","집에서 스스로 공부해 자기주도학습 능력이 향상된다","교사와의 갈등을 자연스럽게 피할 수 있다"],
+    answer: 0,
+    explain: "무단결석은 출결 성적에 반영되고 학교생활기록부에 기재되어 대입 전형 등에 불이익을 줄 수 있습니다. 결석이 필요한 경우 반드시 사전에 허가를 받아야 합니다."
+  },
+  {
+    q: "친구의 물건을 허락 없이 가져가고 돌려주지 않는 행위는?",
+    options: ["친구 사이의 자연스러운 행동이다","잠시 빌린 것이므로 문제가 없다","절도 및 학교폭력(갈취)에 해당한다","나중에 돌려주면 아무런 문제가 없다","친한 사이라면 허락 없이 써도 괜찮다"],
+    answer: 2,
+    explain: "허락 없이 타인의 물건을 가져가는 행위는 절도이며, 반복되거나 강제성이 있으면 갈취(학교폭력)에 해당합니다. '친한 사이'라는 이유로도 정당화될 수 없습니다."
+  },
+
+  /* ─── Section 4: 금연 및 안전사고 예방 ─── */
+  {
+    q: "담배 연기의 3대 유해 물질에 해당하지 않는 것은?",
+    options: ["니코틴","타르","일산화탄소","카페인","벤조피렌"],
+    answer: 3,
+    explain: "담배 연기의 3대 유해 물질은 니코틴(중독), 타르(발암), 일산화탄소(산소 운반 방해)입니다. 카페인은 커피·차 등에 함유된 물질로 담배의 주요 유해 성분이 아닙니다."
+  },
+  {
+    q: "전자담배에 대한 설명으로 옳은 것은?",
+    options: ["연기가 없어 건강에 전혀 해롭지 않다","일반 담배보다 훨씬 안전한 것으로 검증되었다","니코틴이 없어 중독되지 않는다","유해 물질이 포함되어 있으며 중독성이 강하다","청소년도 법적으로 구입하여 사용할 수 있다"],
+    answer: 3,
+    explain: "전자담배에는 니코틴, 프로필렌글리콜 등 각종 유해 물질이 포함되어 있으며 중독성이 매우 강합니다. '안전한 담배'라는 인식은 잘못된 것입니다."
+  },
+  {
+    q: "간접흡연의 위험성으로 틀린 것은?",
+    options: ["비흡연자도 각종 호흡기 질환에 걸릴 수 있다","직접흡연보다 몸에 해롭지 않다","주변 사람들의 건강에도 피해를 준다","어린이와 청소년에게 특히 위험하다","실내 간접흡연 유해 물질은 공기 중에 오래 잔류한다"],
+    answer: 1,
+    explain: "간접흡연의 연기에는 직접흡연의 연기보다 더 많은 유해 물질이 포함되어 있습니다. '덜 해롭다'는 인식은 잘못된 것이며, 특히 어린이·청소년에게 큰 피해를 줍니다."
+  },
+  {
+    q: "학교 계단에서 안전사고를 예방하기 위한 수칙으로 알맞지 않은 것은?",
+    options: ["우측통행을 하며 한 줄로 이동한다","계단에서는 절대 뛰지 않는다","난간을 타고 미끄러져 내려간다","손잡이를 잡고 천천히 이동한다","계단에 물건을 놓지 않는다"],
+    answer: 2,
+    explain: "난간을 타고 미끄러지는 행동은 낙상 등 심각한 안전사고를 일으킬 수 있습니다. 계단에서는 반드시 우측통행, 뛰지 않기, 손잡이 잡기를 지켜야 합니다."
+  },
+  {
+    q: "과학 실험실 안전 수칙으로 올바른 것은?",
+    options: ["실험 전 안전 장비 착용은 선택 사항이다","모르는 약품은 냄새를 맡아 확인한다","실험 중 잠깐 자리를 이탈해도 무방하다","실험 후 남은 시약은 지정된 폐수 통에 버린다","실험 도구는 사용 후 아무 곳에나 보관한다"],
+    answer: 3,
+    explain: "실험 후 남은 시약을 함부로 버리면 환경오염과 사고를 일으킬 수 있습니다. 반드시 지정된 폐수 통에 버려야 합니다. 실험 중에는 항상 보호 장비를 착용해야 합니다."
+  },
+  {
+    q: "체육 시간 전에 준비운동을 하는 가장 중요한 이유는?",
+    options: ["체육 선생님의 지시를 따르기 위해서","근육과 관절을 풀어주어 부상을 예방하기 위해서","땀을 미리 흘려 칼로리를 소비하기 위해서","친구들과 함께 즐거운 시간을 보내기 위해서","체력 측정 전에 미리 몸을 단련하기 위해서"],
+    answer: 1,
+    explain: "준비운동은 근육과 관절을 미리 풀어주고 체온을 높여 신체를 운동에 적합한 상태로 만들어 부상을 예방하는 것이 주된 목적입니다."
+  },
+  {
+    q: "화재 발생 시 대피 요령으로 틀린 것은?",
+    options: ["낮은 자세로 연기를 피하며 이동한다","젖은 수건으로 코와 입을 막는다","엘리베이터를 타고 신속하게 내려간다","비상구 위치를 미리 파악해 둔다","밖으로 나온 후 119에 신고한다"],
+    answer: 2,
+    explain: "화재 시 엘리베이터는 절대 사용해서는 안 됩니다. 정전이 발생하거나 화재층에서 문이 열려 연기가 유입될 수 있습니다. 반드시 계단을 이용해 대피해야 합니다."
+  },
+  {
+    q: "등하교 시 교통안전 수칙으로 바르지 않은 것은?",
+    options: ["횡단보도에서는 초록 신호를 확인 후 건넌다","자전거 탑승 시 헬멧을 반드시 착용한다","보행 중 이어폰을 끼고 큰 소리로 음악을 듣는다","차도에서 갑자기 뛰어나오지 않는다","야간에는 밝은 색 옷이나 야광 장치를 활용한다"],
+    answer: 2,
+    explain: "보행 중 이어폰으로 음악을 크게 들으면 주변 소리(경적, 신호음 등)를 듣지 못해 교통사고 위험이 높아집니다. 보행 중에는 스마트폰 사용을 자제해야 합니다."
+  },
+  {
+    q: "친구가 담배를 권유할 때 가장 올바른 대처 방법은?",
+    options: ["한 번쯤은 경험해도 괜찮다고 생각한다","일단 받아두고 나중에 몰래 버린다","'나는 건강을 지키고 싶어'라며 단호하게 거절한다","친구 관계가 깨질까 봐 어쩔 수 없이 따른다","아무 말 없이 그 자리를 피한다"],
+    answer: 2,
+    explain: "담배 권유를 받으면 자신의 건강과 가치관을 내세워 단호하게 거절해야 합니다. 모호한 태도나 침묵은 나중에 더 강한 권유를 불러올 수 있습니다."
+  },
+  {
+    q: "의식을 잃은 응급 환자를 발견했을 때 가장 먼저 해야 할 일은?",
+    options: ["혼자 해결하려고 물을 마시게 한다","빠르게 업고 직접 병원으로 달려간다","주위 사람들에게 알리지 않고 조용히 처리한다","즉시 119에 신고하고 주변에 도움을 요청한다","의식이 돌아올 때까지 조용히 지켜본다"],
+    answer: 3,
+    explain: "의식 불명 환자를 발견하면 가장 먼저 119에 신고하고 주변에 도움을 요청해야 합니다. 혼자 병원에 데려가거나 함부로 음식·물을 먹이는 것은 위험할 수 있습니다."
+  },
+];
 
 /* ──────────────────────────────────────────
    Supabase REST helpers
 ────────────────────────────────────────── */
+const sbReady = SUPABASE_URL && !SUPABASE_URL.includes('YOUR_SUPABASE_URL');
 const sbHeaders = {
   'apikey': SUPABASE_KEY,
   'Authorization': 'Bearer ' + SUPABASE_KEY,
@@ -429,7 +623,7 @@ const sbHeaders = {
 async function sbGet() {
   try {
     const r = await fetch(
-      SUPABASE_URL + '/rest/v1/leaderboard?select=name,student_id,score,created_at&order=score.desc,created_at.asc&limit=20',
+      SUPABASE_URL + '/rest/v1/leaderboard?select=name,student_id,score,time_seconds,created_at&order=score.desc,time_seconds.asc&limit=5',
       { headers: sbHeaders }
     );
     if (!r.ok) return [];
@@ -449,189 +643,284 @@ async function sbPush(entry) {
   }
 }
 
-function subscribeLeaderboard() {
-  if (!sbReady) return;
-  pollLb();
+/* ──────────────────────────────────────────
+   State
+────────────────────────────────────────── */
+let current = 0;
+let score = 0;
+let startTime = null;
+let timerInterval = null;
+let lbPollInterval = null;
+
+/* ──────────────────────────────────────────
+   Timer helpers
+────────────────────────────────────────── */
+function fmtTime(secs) {
+  const m = Math.floor(secs / 60).toString().padStart(2, '0');
+  const s = (secs % 60).toString().padStart(2, '0');
+  return m + ':' + s;
 }
 
-async function pollLb() {
-  const entries = await sbGet();
-  renderLb(entries);
-  document.getElementById('lbLive').classList.remove('hidden');
-  setTimeout(pollLb, 5000);
+function startTimer() {
+  startTime = Date.now();
+  const el = document.getElementById('timerDisplay');
+  el.classList.add('running');
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    el.textContent = fmtTime(elapsed);
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  const el = document.getElementById('timerDisplay');
+  el.classList.remove('running');
+}
+
+function getElapsedSeconds() {
+  if (!startTime) return null;
+  return Math.floor((Date.now() - startTime) / 1000);
 }
 
 /* ──────────────────────────────────────────
-   Leaderboard render
+   Section tag
 ────────────────────────────────────────── */
-function renderLb(entries) {
-  entries.sort((a, b) => (b.score - a.score) || (a.time - b.time));
-  const top5 = entries.slice(0, 5);
-  const el = document.getElementById('lbList');
-  if (!top5.length) {
-    el.innerHTML = '<div class="lb-empty">아직 등록된 점수가 없습니다.<br>첫 번째 주인공이 되어보세요!</div>';
-    return;
+function updateSectionTag(idx) {
+  const sectionEl = document.getElementById('sectionTag');
+  for (const s of SECTIONS) {
+    if (idx >= s.range[0] && idx <= s.range[1]) {
+      sectionEl.textContent = s.title;
+      return;
+    }
   }
-  el.innerHTML = '';
-  top5.forEach((e, i) => {
-    const row = document.createElement('div');
-    row.className = 'lb-row r' + (i + 1);
-    row.innerHTML = `
-      <span class="lb-rank">${MEDALS[i]}</span>
-      <div class="lb-info">
-        <div class="lb-name">${esc(e.name)}</div>
-        <div class="lb-id">학번 ${esc(e.student_id)}</div>
-      </div>
-      <span class="lb-score">${e.score}점</span>`;
-    el.appendChild(row);
-  });
-}
-
-function esc(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 /* ──────────────────────────────────────────
    Quiz logic
 ────────────────────────────────────────── */
-function renderQuestion() {
-  answered = false;
-  const q = QUESTIONS[current];
-  document.getElementById('progressFill').style.width = (current / 10 * 100) + '%';
-  document.getElementById('progressNum').textContent  = current + ' / 10';
-  document.getElementById('questionNum').textContent  = `문제 ${current + 1}`;
-  document.getElementById('questionText').textContent = q.q;
-  document.getElementById('explanation').classList.add('hidden');
-  document.getElementById('nextBtn').classList.add('hidden');
+const TOTAL = QUESTIONS.length;
+const LETTERS = ['①','②','③','④','⑤'];
 
+function loadQuestion(idx) {
+  // Start timer on first question
+  if (idx === 0 && !startTime) startTimer();
+
+  const q = QUESTIONS[idx];
+  document.getElementById('questionNum').textContent = `문제 ${idx + 1}`;
+  document.getElementById('questionText').textContent = q.q;
+
+  // Progress
+  document.getElementById('progressFill').style.width = (idx / TOTAL * 100) + '%';
+  document.getElementById('progressNum').textContent = `${idx} / ${TOTAL}`;
+  updateSectionTag(idx);
+
+  // Options
   const container = document.getElementById('optionsContainer');
   container.innerHTML = '';
   q.options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'option-btn';
-    btn.innerHTML = `<span class="option-letter">${LETTERS[i]}</span><span>${esc(opt)}</span>`;
-    btn.addEventListener('click', () => pick(i));
+    btn.innerHTML = `<span class="option-letter">${LETTERS[i]}</span><span>${opt}</span>`;
+    btn.addEventListener('click', () => selectAnswer(i, btn));
     container.appendChild(btn);
   });
+
+  document.getElementById('explanation').classList.add('hidden');
+  document.getElementById('nextBtn').classList.add('hidden');
 }
 
-function pick(idx) {
-  if (answered) return;
-  answered = true;
+function selectAnswer(chosen, btn) {
   const q = QUESTIONS[current];
-  const ok = idx === q.answer;
-  if (ok) score++;
+  const btns = document.querySelectorAll('.option-btn');
 
-  document.querySelectorAll('.option-btn').forEach((btn, i) => {
-    btn.disabled = true;
-    if (i === q.answer) btn.classList.add('correct');
-    else if (i === idx)  btn.classList.add('wrong');
-    else                 btn.classList.add('dimmed');
+  btns.forEach(b => b.disabled = true);
+
+  if (chosen === q.answer) {
+    btn.classList.add('correct');
+    score++;
+  } else {
+    btn.classList.add('wrong');
+    btns[q.answer].classList.add('correct');
+  }
+
+  btns.forEach((b, i) => {
+    if (i !== chosen && i !== q.answer) b.classList.add('dimmed');
   });
 
-  const exp = document.getElementById('explanation');
-  exp.textContent = (ok ? '✓ 정답입니다! ' : '✗ 오답입니다. ') + q.explain;
-  exp.classList.remove('hidden');
+  if (q.explain) {
+    const expl = document.getElementById('explanation');
+    expl.textContent = q.explain;
+    expl.classList.remove('hidden');
+  }
 
-  const nb = document.getElementById('nextBtn');
-  nb.textContent = current < 9 ? '다음 문제 →' : '결과 보기 →';
-  nb.classList.remove('hidden');
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.textContent = current + 1 < TOTAL ? '다음 문제 →' : '결과 보기 →';
+  nextBtn.classList.remove('hidden');
 }
 
 document.getElementById('nextBtn').addEventListener('click', () => {
   current++;
-  current < 10 ? renderQuestion() : showResult();
+  if (current < TOTAL) {
+    loadQuestion(current);
+  } else {
+    showResult();
+  }
 });
 
 /* ──────────────────────────────────────────
    Result
 ────────────────────────────────────────── */
 function showResult() {
-  document.getElementById('quizCard').classList.add('hidden');
-  document.getElementById('resultCard').classList.remove('hidden');
-  document.getElementById('progressFill').style.width = '100%';
-  document.getElementById('progressNum').textContent  = '10 / 10';
+  stopTimer();
+  const elapsed = getElapsedSeconds();
 
-  // Score ring
-  const circ = 2 * Math.PI * 37;
-  const ring = document.getElementById('ringFill');
-  ring.setAttribute('stroke-dasharray', circ);
-  ring.setAttribute('stroke-dashoffset', circ);
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('quizCard').previousElementSibling.classList.add('hidden');  // header
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressNum').textContent = `${TOTAL} / ${TOTAL}`;
+
+  const rc = document.getElementById('resultCard');
+  rc.classList.remove('hidden');
+
+  // Score ring animation
+  const pct = score / TOTAL;
+  const circumference = 232;
+  document.getElementById('ringFill').style.strokeDashoffset = circumference * (1 - pct);
   document.getElementById('scoreNum').textContent = score;
-  setTimeout(() => ring.setAttribute('stroke-dashoffset', circ * (1 - score / 10)), 80);
 
   // Message
-  const t = score === 10 ? '완벽해요! 🏆'
-    : score >= 8 ? '잘했어요! 👍'
-    : score >= 6 ? '보통이에요 📚' : '더 공부해봐요 💪';
-  const s = `${score}점 / 10점 — 학번과 이름을 입력하고 순위에 도전해 보세요!`;
-  document.getElementById('resultTitle').textContent = t;
-  document.getElementById('resultSub').textContent   = s;
+  let title, sub;
+  if (pct === 1)       { title = '🏅 완벽한 점수!';     sub = '모든 문제를 맞혔습니다. 대단해요!'; }
+  else if (pct >= 0.8) { title = '😊 훌륭한 점수!';     sub = `${TOTAL - score}문제만 틀렸어요. 거의 다 알고 있네요!`; }
+  else if (pct >= 0.6) { title = '📖 잘 했어요!';       sub = '다시 한번 복습해보면 더 잘할 수 있을 거예요.'; }
+  else                  { title = '💪 더 공부해 봐요!';   sub = '예방교육 내용을 복습하고 다시 도전해 보세요.'; }
 
-  // Supabase 없을 때 안내
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = sub;
+  document.getElementById('resultTime').textContent = `풀이 시간: ${fmtTime(elapsed)}`;
+
+  // Reset submit form
+  document.getElementById('iSid').value = '';
+  document.getElementById('iName').value = '';
+  document.getElementById('submitMsg').textContent = '';
+  document.getElementById('submitMsg').className = 'hidden';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitForm').classList.remove('hidden');
+
+  // Store elapsed for submission
+  document.getElementById('submitBtn').dataset.elapsed = elapsed;
+
+  // Load leaderboard
+  loadLeaderboard();
+  if (sbReady) {
+    document.getElementById('lbLive').classList.remove('hidden');
+    lbPollInterval = setInterval(loadLeaderboard, 5000);
+  }
+}
+
+/* ──────────────────────────────────────────
+   Submit
+────────────────────────────────────────── */
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const sid = document.getElementById('iSid').value.trim();
+  const name = document.getElementById('iName').value.trim();
+  const elapsed = parseInt(document.getElementById('submitBtn').dataset.elapsed, 10) || 0;
+
+  if (!sid || !name) {
+    showMsg('학번과 이름을 모두 입력해 주세요.', 'error');
+    return;
+  }
   if (!sbReady) {
-    document.getElementById('setupBanner').classList.remove('hidden');
-    showMsg('Supabase URL이 설정되지 않아 순위 기능을 사용할 수 없습니다.', 'info');
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('lbList').innerHTML =
-      '<div class="lb-empty">Supabase 설정 후 이용 가능합니다.</div>';
+    showMsg('⚠️ Supabase 연결이 설정되지 않았습니다.', 'error');
     return;
   }
 
-  // Subscribe to leaderboard
-  subscribeLeaderboard();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '등록 중…';
 
-  // Submit
-  document.getElementById('submitBtn').addEventListener('click', async () => {
-    if (submitted) return;
-    const sid  = document.getElementById('iSid').value.trim();
-    const name = document.getElementById('iName').value.trim();
-    if (!sid || !name) { showMsg('학번과 이름을 모두 입력해주세요.', 'error'); return; }
-
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = '등록 중…';
-
-    try {
-      await sbPush({ score, name, student_id: sid });
-      submitted = true;
-      document.getElementById('submitForm').classList.add('hidden');
-      showMsg(`✓ ${name} 학생의 ${score}점이 등록되었습니다! 아래 순위를 확인하세요.`, 'success');
-    } catch {
-      btn.disabled = false; btn.textContent = '점수 등록하기';
-      showMsg('등록 중 오류가 발생했습니다. 다시 시도해 주세요.', 'error');
-    }
-  });
-}
+  try {
+    await sbPush({ score, name, student_id: sid, time_seconds: elapsed });
+    showMsg(`✅ 등록 완료! ${name} 학생 (${score}점 / ${fmtTime(elapsed)})`, 'success');
+    document.getElementById('submitForm').classList.add('hidden');
+    loadLeaderboard();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = '점수 등록하기';
+    showMsg('❌ 등록 실패: ' + e.message, 'error');
+  }
+});
 
 function showMsg(text, type) {
   const el = document.getElementById('submitMsg');
   el.textContent = text;
   el.className = 'msg ' + type;
-  el.classList.remove('hidden');
 }
 
+/* ──────────────────────────────────────────
+   Leaderboard
+────────────────────────────────────────── */
+const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+const ROW_CLASSES = ['r1','r2','r3','',''];
+
+async function loadLeaderboard() {
+  if (!sbReady) {
+    document.getElementById('lbList').innerHTML = '<div class="lb-empty">Supabase 연결 후 순위가 표시됩니다.</div>';
+    return;
+  }
+  const data = await sbGet();
+  const list = document.getElementById('lbList');
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div class="lb-empty">아직 등록된 학생이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = data.map((e, i) => {
+    const timeStr = (e.time_seconds != null) ? fmtTime(e.time_seconds) : '--:--';
+    return `
+    <div class="lb-row ${ROW_CLASSES[i] || ''}">
+      <span class="lb-rank">${MEDALS[i] || (i + 1)}</span>
+      <div class="lb-info">
+        <div class="lb-name">${esc(e.name)}</div>
+        <div class="lb-id">${esc(e.student_id)}</div>
+      </div>
+      <div class="lb-right">
+        <div class="lb-score">${e.score}점</div>
+        <div class="lb-time">⏱ ${timeStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ──────────────────────────────────────────
+   Restart
+────────────────────────────────────────── */
 document.getElementById('restartBtn').addEventListener('click', () => {
-  current = 0; score = 0; submitted = false;
-  if (lbStream) { lbStream.close(); lbStream = null; }
+  clearInterval(lbPollInterval);
+  lbPollInterval = null;
+  current = 0;
+  score = 0;
+  startTime = null;
+  stopTimer();
+  document.getElementById('timerDisplay').textContent = '00:00';
+
   document.getElementById('resultCard').classList.add('hidden');
+  const header = document.querySelector('.quiz-header');
+  header.classList.remove('hidden');
   document.getElementById('quizCard').classList.remove('hidden');
-  document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('progressNum').textContent  = '0 / 10';
-  document.getElementById('submitForm').classList.remove('hidden');
-  document.getElementById('submitMsg').classList.add('hidden');
-  document.getElementById('iSid').value = '';
-  document.getElementById('iName').value = '';
-  document.getElementById('submitBtn').disabled = false;
-  document.getElementById('submitBtn').textContent = '점수 등록하기';
+
+  loadQuestion(0);
   document.getElementById('lbLive').classList.add('hidden');
-  document.getElementById('lbList').innerHTML = '<div class="lb-empty">아직 등록된 점수가 없습니다.</div>';
-  renderQuestion();
 });
 
-// Init
-renderQuestion();
+/* ──────────────────────────────────────────
+   Init
+────────────────────────────────────────── */
+loadQuestion(0);
 </script>
 </body>
 </html>
