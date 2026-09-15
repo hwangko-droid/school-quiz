@@ -316,7 +316,7 @@
 
   <!-- 등록 폼 -->
   <div id="submitSection">
-    <div class="section-label">🏆 상위 10등 등록</div>
+    <div class="section-label">🏆 상위 20등 등록</div>
     <div id="submitForm">
       <div class="form-row">
         <div class="form-field">
@@ -338,7 +338,7 @@
   <!-- 순위판 -->
   <div>
     <div class="lb-header">
-      <div class="section-label" style="margin:0">📋 상위 10명 현황</div>
+      <div class="section-label" style="margin:0">📋 상위 20명 현황</div>
       <span class="lb-live hidden" id="lbLive">LIVE</span>
     </div>
     <div class="lb-list" id="lbList">
@@ -623,7 +623,7 @@ const sbHeaders = {
 async function sbGet() {
   try {
     const r = await fetch(
-      SUPABASE_URL + '/rest/v1/leaderboard?select=name,student_id,score,time_seconds,created_at&order=score.desc,time_seconds.asc&limit=10',
+      SUPABASE_URL + '/rest/v1/leaderboard?select=name,student_id,score,time_seconds,created_at&order=score.desc,time_seconds.asc&limit=20',
       { headers: sbHeaders }
     );
     if (!r.ok) return [];
@@ -861,8 +861,8 @@ function showMsg(text, type) {
 /* ──────────────────────────────────────────
    Leaderboard
 ────────────────────────────────────────── */
-const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
-const ROW_CLASSES = ['r1','r2','r3','','','','','','',''];
+const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','11','12','13','14','15','16','17','18','19','20'];
+const ROW_CLASSES = ['r1','r2','r3','','','','','','','','','','','','','','','','',''];
 
 async function loadLeaderboard() {
   if (!sbReady) {
