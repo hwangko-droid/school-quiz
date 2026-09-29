@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 나도 맞춤법퀴즈왕</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --gold: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 16px; }
+
+  /* Header */
+  .quiz-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #7c3aed 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+  }
+  .quiz-header h1 { font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
+  .quiz-header p { font-size: 0.9rem; opacity: 0.9; }
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.82rem;
+    margin-top: 10px;
+  }
+
+  /* Progress */
+  .progress-bar {
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    margin-bottom: 16px;
+  }
+
+  /* Question */
+  .question-num {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .section-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .question-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    word-break: keep-all;
+  }
+
+  /* Options: 2-choice side by side */
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+  @media (max-width: 480px) {
+    .options { grid-template-columns: 1fr; }
+  }
+  .opt-btn {
+    width: 100%;
+    padding: 14px 12px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    word-break: keep-all;
+    line-height: 1.4;
+  }
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: #eff6ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.15);
+  }
+  .opt-btn.correct {
+    background: #dcfce7;
+    border-color: var(--success);
+    color: var(--success);
+  }
+  .opt-btn.wrong {
+    background: #fee2e2;
+    border-color: var(--danger);
+    color: var(--danger);
+    text-decoration: line-through;
+  }
+  .opt-btn.dimmed {
+    opacity: 0.4;
+  }
+  .opt-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+    font-weight: 400;
+  }
+
+  /* Explanation */
+  .explain-box {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f0fdf4;
+    border-left: 4px solid var(--success);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.88rem;
+    color: #166534;
+    display: none;
+  }
+  .explain-box.wrong-explain {
+    background: #fff7ed;
+    border-color: #f97316;
+    color: #9a3412;
+  }
+
+  /* Next button */
+  .next-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 16px;
+    display: none;
+    transition: background 0.2s;
+  }
+  .next-btn:hover { background: var(--primary-dark); }
+
+  /* Result screen */
+  #result-screen { display: none; }
+  .result-card {
+    text-align: center;
+    padding: 32px 24px;
+  }
+  .score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a8a, #7c3aed);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.3);
+  }
+  .score-number { font-size: 2.6rem; font-weight: 800; }
+  .score-label { font-size: 0.8rem; opacity: 0.85; }
+  .result-msg {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+
+  /* Registration */
+  #reg-section { display: none; }
+  .reg-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--muted);
+  }
+  .form-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--primary); }
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+  .submit-btn:hover { background: #15803d; }
+  .submit-btn:disabled { background: var(--muted); cursor: not-allowed; }
+
+  .closed-msg {
+    background: #fff7ed;
+    border: 2px solid #fed7aa;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    color: #9a3412;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: none;
+  }
+
+  .retry-btn {
+    width: 100%;
+    padding: 13px;
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+  .retry-btn:hover { background: #eff6ff; }
+
+  /* Leaderboard */
+  .leaderboard { margin-top: 24px; }
+  .lb-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lb-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    background: var(--bg);
+    font-size: 0.9rem;
+  }
+  .lb-row.gold { background: #fef9c3; border: 1px solid #fde68a; }
+  .lb-row.silver { background: #f1f5f9; border: 1px solid #e2e8f0; }
+  .lb-row.bronze { background: #fff7ed; border: 1px solid #fed7aa; }
+  .lb-rank {
+    width: 28px;
+    font-weight: 800;
+    color: var(--muted);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .lb-rank.r1 { color: #b45309; }
+  .lb-rank.r2 { color: #6b7280; }
+  .lb-rank.r3 { color: #92400e; }
+  .lb-name { flex: 1; font-weight: 600; }
+  .lb-id { color: var(--muted); font-size: 0.82rem; margin-right: 10px; }
+  .lb-score { font-weight: 700; color: var(--primary); font-size: 0.88rem; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1e293b;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: transform 0.35s ease;
+    z-index: 9999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  #start-screen { display: block; }
+  #quiz-screen { display: none; }
+
+  .start-card { text-align: center; padding: 32px 24px; }
+  .start-card h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; }
+  .start-card p { color: var(--muted); margin-bottom: 6px; font-size: 0.92rem; }
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .info-item {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .info-item .num { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+  .info-item .desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .start-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #1e3a8a, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 1px;
+    margin-top: 6px;
+    box-shadow: 0 6px 18px rgba(37,99,235,0.3);
+    transition: transform 0.2s;
+  }
+  .start-btn:hover { transform: translateY(-2px); }
+
+  .section-divider {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 8px 0 4px;
+    padding: 6px 0;
+    border-top: 1px dashed var(--border);
+  }
+  .section-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .ss-item {
+    font-size: 0.78rem;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--muted);
+  }
+  .ss-item strong { color: var(--primary); display: block; font-size: 0.7rem; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="quiz-header">
+    <h1>📝 나도 맞춤법퀴즈왕</h1>
+    <p>우리말 맞춤법, 얼마나 알고 있나요?</p>
+    <span class="badge">🏆 100점 선착순 30명 시상</span>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="start-screen">
+    <div class="card start-card">
+      <h2>퀴즈 안내</h2>
+      <p>잘못 표기하기 쉬운 맞춤법 문제들입니다.</p>
+      <p>2개의 선택지 중 올바른 표기를 고르세요!</p>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="num">50</div>
+          <div class="desc">문제 수</div>
+        </div>
+        <div class="info-item">
+          <div class="num">100점</div>
+          <div class="desc">만점</div>
+        </div>
+        <div class="info-item">
+          <div class="num">2점</div>
+          <div class="desc">문제당 배점</div>
+        </div>
+        <div class="info-item">
+          <div class="num">30명</div>
+          <div class="desc">선착순 시상</div>
+        </div>
+      </div>
+      <div class="section-divider">📚 출제 범위</div>
+      <div class="section-sections">
+        <div class="ss-item"><strong>1~10번</strong>가장 많이 틀리는 일상어</div>
+        <div class="ss-item"><strong>11~20번</strong>발음 때문에 헷갈리는 표기</div>
+        <div class="ss-item"><strong>21~30번</strong>시험에 자주 나오는 단골 문제</div>
+        <div class="ss-item"><strong>31~40번</strong>어른들도 자주 틀리는 생활 맞춤법</div>
+        <div class="ss-item" style="grid-column: span 2;"><strong>41~50번</strong>은근히 헷갈리는 부사와 음식 이름</div>
+      </div>
+      <button class="start-btn" onclick="startQuiz()">🚀 퀴즈 시작!</button>
+    </div>
+
+    <!-- Leaderboard on start screen -->
+    <div class="card">
+      <div class="lb-title">🏆 100점 선착순 명예의 전당 <span id="lb-count-start" style="color:var(--muted);font-size:0.8rem;font-weight:400;"></span></div>
+      <div id="lb-list-start"><p style="color:var(--muted);font-size:0.88rem;text-align:center;padding:10px 0;">불러오는 중...</p></div>
+    </div>
+  </div>
+
+  <!-- Quiz Screen -->
+  <div id="quiz-screen">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-info">
+      <span id="q-counter">1 / 50</span>
+      <span id="score-display">0점</span>
+    </div>
+
+    <div class="card" id="question-card">
+      <div class="question-num" id="q-num">문제 1</div>
+      <div class="section-label" id="section-label"></div>
+      <div class="question-text" id="q-text"></div>
+      <div class="options" id="options-area"></div>
+      <div class="explain-box" id="explain-box"></div>
+    </div>
+
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">다음 문제 →</button>
+  </div>
+
+  <!-- Result Screen -->
+  <div id="result-screen">
+    <div class="card result-card">
+      <div class="score-circle">
+        <div class="score-number" id="final-score-num">0</div>
+        <div class="score-label">/ 100점</div>
+      </div>
+      <div class="result-msg" id="result-msg"></div>
+      <div class="result-sub" id="result-sub"></div>
+
+      <!-- 100점 등록 섹션 -->
+      <div id="reg-section">
+        <div class="reg-title">🎉 100점 달성! 선착순 등록</div>
+        <div class="form-group">
+          <label>이름</label>
+          <input type="text" id="reg-name" placeholder="이름을 입력하세요" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label>학번 (예: 10219)</label>
+          <input type="text" id="reg-id" placeholder="학번을 입력하세요" maxlength="10">
+        </div>
+        <button class="submit-btn" id="submit-btn" onclick="submitScore()">🏆 시상 명단 등록하기</button>
+      </div>
+
+      <div class="closed-msg" id="closed-msg">
+        🏅 선착순 30명이 이미 마감되었습니다.<br>수고하셨습니다!
+      </div>
+
+      <button class="retry-btn" onclick="retryQuiz()">🔄 다시 풀기</button>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="card leaderboard">
+      <div class="lb-title">🏆 100점 선착순 명예의 전당 <span id="lb-count" style="color:var(--muted);font-size:0.8rem;font-weight:400;"></span></div>
+      <div id="lb-list"><p style="color:var(--muted);font-size:0.88rem;text-align:center;padding:10px 0;">불러오는 중...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://pkslwnwjdxczxyhulfqj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrc2x3bndqZHhjenh5aHVsZnFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjU4NjksImV4cCI6MjEwNDk0MTg2OX0.nxNBOrli8GCRvUgyBhX4UErN67sVnIpF44Qz-URSOiM';
+const TABLE = 'spelling_quiz';
+const MAX_WINNERS = 30;
+
+const SECTIONS = [
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '가장 많이 틀리는 일상어',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '발음 때문에 헷갈리는 표기',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '시험에 자주 나오는 단골 문제',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '어른들도 자주 틀리는 생활 맞춤법',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+  '헷갈리는 부사와 음식 이름',
+];
+
+const QUESTIONS = [
+  // 1~10: 가장 많이 틀리는 일상어
+  { q: "이번 주말에는 시간이 ___.", options: ["안 돼", "안 되"], answer: 0, explain: "'되어'를 넣어서 말이 되면 '돼'를 씁니다. (안 되어 → 안 돼)" },
+  { q: "오늘이 도대체 ___이야?", options: ["며칠", "몇 일"], answer: 0, explain: "'몇 일'이라는 표기는 우리말에 없습니다. 무조건 '며칠'입니다." },
+  { q: "그 말을 들으니 참 ___.", options: ["어이없다", "어의없다"], answer: 0, explain: "'어의'는 조선시대 임금의 병을 고치던 의사입니다." },
+  { q: "친구를 ___ 만났다.", options: ["오랜만에", "오랫만에"], answer: 0, explain: "'오래간만'의 줄임말입니다. (단, '오랫동안'은 맞음)" },
+  { q: "지각하면 ___?", options: ["어떡해", "어떻해"], answer: 0, explain: "'어떻게 해'가 줄어든 말이 '어떡해'입니다." },
+  { q: "푹 쉬고 빨리 ___.", options: ["병이 낫다", "병이 낳다"], answer: 0, explain: "상처나 병이 회복될 때는 '낫다'입니다. ('낳다'는 아기를 출산할 때)" },
+  { q: "오늘은 ___ 기분이 좋다.", options: ["왠지", "웬지"], answer: 0, explain: "'왜인지'의 줄임말인 '왠지'를 빼고는 모두 '웬'입니다. (웬일, 웬만하면)" },
+  { q: "소문이 ___ 퍼졌다.", options: ["금세", "금새"], answer: 0, explain: "'금시에'가 줄어든 말이므로 '금세'가 맞습니다." },
+  { q: "식당에서 ___를 했다.", options: ["카드 결제", "카드 결재"], answer: 0, explain: "돈을 지불할 때는 결제(濟), 상사에게 서류 승인을 받을 때는 결재(裁)입니다." },
+  { q: "반장으로서의 ___에 최선을 다하자.", options: ["역할", "역활"], answer: 0, explain: "맡은 바 직책이나 임무를 뜻하는 한자어 역할(役割)입니다." },
+  // 11~20: 발음 때문에 헷갈리는 표기
+  { q: "제가 먼저 청소 ___.", options: ["할게요", "할께요"], answer: 0, explain: "발음은 [할께요]로 나지만 표기는 'ㄱ'으로 적습니다." },
+  { q: "외출할 때는 반드시 ___.", options: ["문을 잠가라", "문을 잠궈라"], answer: 0, explain: "기본형이 '잠그다'이므로 '잠가라'가 됩니다." },
+  { q: "선생님, ___.", options: ["내일 봬요", "내일 뵈요"], answer: 0, explain: "'뵈어요'가 줄어든 말이므로 '봬요'가 맞습니다." },
+  { q: "밥을 먹고 ___를 했다.", options: ["설거지", "설겆이"], answer: 0, explain: "'설겆다'라는 동사가 사라져서 소리 나는 대로 적습니다." },
+  { q: "___ 그렇게까지 할 필요는 없다.", options: ["굳이", "구지"], answer: 0, explain: "발음은 [구지]지만 뜻을 밝혀 '굳이'로 적습니다." },
+  { q: "정말 ___.", options: ["희한하다", "희안하다"], answer: 0, explain: "매우 드물고 신기하다는 뜻의 한자어 희한(稀罕)입니다." },
+  { q: "그 옷은 누가 입어도 ___.", options: ["무난하다", "문안하다"], answer: 0, explain: "까다롭지 않고 평탄하다는 뜻의 무난(無難)입니다." },
+  { q: "마침내 사건의 진실이 ___.", options: ["드러나다", "들어나다"], answer: 0, explain: "가려져 있던 것이 보이게 될 때는 '드러나다'를 씁니다." },
+  { q: "여행 짐은 ___ 할수록 좋다.", options: ["단출하다", "단촐하다"], answer: 0, explain: "식구나 짐이 적을 때는 '단출하다'가 올바른 표준어입니다." },
+  { q: "꼭 합격하기를 바라는 ___.", options: ["우리의 바람", "우리의 바램"], answer: 0, explain: "기본형이 '바라다'이므로 명사형은 '바람'입니다." },
+  // 21~30: 시험에 자주 나오는 단골 문제
+  { q: "그렇게 얇게 입으면 감기에 걸리기 ___.", options: ["십상이다", "쉽상이다"], answer: 0, explain: "'십중팔구'와 같은 뜻인 '십상팔구'에서 온 말입니다." },
+  { q: "사건이 복잡하게 ___.", options: ["얽히고설키다", "얼키고설키다"], answer: 0, explain: "얽다(얽히다)의 뜻이 살아있어 앞은 원형을 밝혀 적습니다." },
+  { q: "너무 시끄러워서 ___.", options: ["눈살을 찌푸리다", "눈쌀을 찌푸리다"], answer: 0, explain: "'눈'과 '살(피부)'이 합쳐진 말이므로 '눈살'이 맞습니다." },
+  { q: "남자의 매력은 수염과 ___.", options: ["구레나룻", "구렛나루"], answer: 0, explain: "'구레(굴레)'와 '나룻(수염)'이 합쳐진 순우리말입니다." },
+  { q: "사과를 ___ 한 입 베어 물었다.", options: ["통째로", "통채로"], answer: 0, explain: "어떤 덩어리 전부를 뜻하는 접미사는 '-째'입니다." },
+  { q: "빈칸에 ___ 말을 고르시오.", options: ["알맞은", "알맞는"], answer: 0, explain: "'알맞다'는 형용사이므로 '-은'이 붙습니다." },
+  { q: "학생 신분에 ___ 행동을 해라.", options: ["걸맞은", "걸맞는"], answer: 0, explain: "'걸맞다' 역시 형용사이므로 '-은'이 붙습니다." },
+  { q: "수학 시험에서 ___을 구하시오.", options: ["백분율", "백분률"], answer: 0, explain: "모음이나 'ㄴ' 받침 뒤에서는 '율'로 적습니다. (합격률, 이자율)" },
+  { q: "잘 모르면서 ___.", options: ["아는 체하다", "아는 채하다"], answer: 0, explain: "거짓으로 꾸밀 때는 '체하다' 또는 '척하다'를 씁니다." },
+  { q: "대한민국의 ___ 자랑스럽다.", options: ["학생으로서", "학생으로써"], answer: 0, explain: "신분이나 자격을 나타낼 때는 '-로서'를 씁니다." },
+  // 31~40: 어른들도 자주 틀리는 생활 맞춤법
+  { q: "퀴즈의 ___.", options: ["정답을 맞히다", "정답을 맞추다"], answer: 0, explain: "문제를 풀어 정답을 골라낼 때는 '맞히다'입니다. ('맞추다'는 퍼즐을 맞추다)" },
+  { q: "점심 메뉴로 얼큰한 ___을 먹었다.", options: ["육개장", "육계장"], answer: 0, explain: "소고기(肉)를 넣고 개장국처럼 끓였다 하여 '육개장'입니다." },
+  { q: "실내에서 큰 소리로 떠드는 것을 ___.", options: ["삼가 주시기 바랍니다", "삼가해 주시기 바랍니다"], answer: 0, explain: "기본형이 '삼가다'이므로 '삼가'로 활용합니다." },
+  { q: "그녀는 ___ 의견을 말했다.", options: ["서슴지 않고", "서슴치 않고"], answer: 0, explain: "기본형 '서슴-다'에 '않다'가 결합하였으므로 '-지'가 맞습니다." },
+  { q: "무사히 ___ 집으로 돌아왔다.", options: ["시험을 치르고", "시험을 치루고"], answer: 0, explain: "기본형이 '치르다'이므로 '치르고, 치렀다'가 맞습니다." },
+  { q: "김치를 ___ 먹었다.", options: ["담가", "담궈"], answer: 0, explain: "기본형이 '담그다'이므로 '담가, 담갔다'로 씁니다." },
+  { q: "___ 반말이야?", options: ["얻다 대고", "어따 대고"], answer: 0, explain: "'어디에다 대고'의 줄임말이므로 '얻다 대고'가 맞습니다." },
+  { q: "아침에 일어나니 ___가 안 빠진다.", options: ["얼굴의 부기", "얼굴의 붓기"], answer: 0, explain: "부종으로 부어오른 상태는 한자어 부기(浮氣)입니다." },
+  { q: "입가에 잔잔한 ___.", options: ["미소를 띠다", "미소를 띄다"], answer: 0, explain: "감정이나 색채를 머금을 때는 '띠다'입니다. (눈에 띄다는 '띄다')" },
+  { q: "아파서 그런지 얼굴이 매우 ___.", options: ["핼쑥하다", "핼쓱하다"], answer: 0, explain: "얼굴에 핏기가 없고 파리한 모습은 '핼쑥하다'입니다." },
+  // 41~50: 은근히 헷갈리는 부사와 음식 이름
+  { q: "___ 영단어를 외웠다.", options: ["틈틈이", "틈틈히"], answer: 0, explain: "명사 겹쳐진 말(틈틈) 뒤에는 '-이'가 붙습니다." },
+  { q: "그 문제에 대해 ___ 생각해 보았다.", options: ["곰곰이", "곰곰히"], answer: 0, explain: "부사(곰곰) 뒤에도 '-이'가 붙습니다." },
+  { q: "학생들의 이름을 ___ 다 불러주었다.", options: ["일일이", "일일히"], answer: 0, explain: "첩어(일일) 명사 뒤이므로 '-이'로 적습니다." },
+  { q: "방을 ___ 청소했다.", options: ["깨끗이", "깨끗히"], answer: 0, explain: "'ㅅ' 받침으로 끝나는 말 뒤에는 '-이'가 붙습니다." },
+  { q: "친구에게 ___ 마음을 털어놓았다.", options: ["솔직히", "솔직이"], answer: 0, explain: "'솔직하다'처럼 '-하다'가 붙는 말 뒤에는 주로 '-히'가 붙습니다." },
+  { q: "분식집에서 ___를 시켰다.", options: ["떡볶이", "떡볶기"], answer: 0, explain: "떡을 볶은 음식이라는 뜻으로 파생접미사 '-이'가 붙습니다." },
+  { q: "한국인의 소울푸드 ___.", options: ["김치찌개", "김치찌게"], answer: 0, explain: "지우개, 덮개처럼 도구/쓰임을 뜻하는 '-개'가 붙습니다." },
+  { q: "갈증이 나서 물을 단숨에 ___.", options: ["들이켜다", "들이키다"], answer: 0, explain: "물이나 술을 단숨에 마실 때는 '들이켜다'입니다." },
+  { q: "옷의 찢어진 부분을 ___ 했다.", options: ["짜깁기", "짜집기"], answer: 0, explain: "구멍 난 곳을 '짜고', 꿰매어 '깁다'가 합쳐진 말입니다." },
+  { q: "왜 애를 그렇게 ___?", options: ["닦달하니", "닥달하니"], answer: 0, explain: "윽박질러 혼낼 때는 '닦달하다'가 맞습니다." },
+];
+
+// State
+let currentQ = 0;
+let score = 0;
+let answered = false;
+let shuffledAnswer = 0;
+let startTime = null;
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  currentQ = 0;
+  score = 0;
+  startTime = Date.now();
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = QUESTIONS[currentQ];
+  const idx = currentQ;
+
+  document.getElementById('q-num').textContent = `문제 ${idx + 1}`;
+  document.getElementById('section-label').textContent = SECTIONS[idx];
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('explain-box').style.display = 'none';
+  document.getElementById('explain-box').className = 'explain-box';
+  document.getElementById('next-btn').style.display = 'none';
+
+  // Progress
+  const pct = (idx / QUESTIONS.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('q-counter').textContent = `${idx + 1} / ${QUESTIONS.length}`;
+  document.getElementById('score-display').textContent = `${score}점`;
+
+  // Shuffle options
+  const optIndices = shuffleArray([0, 1]);
+  const shuffledOptions = optIndices.map(i => q.options[i]);
+  shuffledAnswer = optIndices.indexOf(q.answer);
+
+  const area = document.getElementById('options-area');
+  area.innerHTML = '';
+  const labels = ['A', 'B'];
+  shuffledOptions.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[i]}</span>${opt}`;
+    btn.onclick = () => selectAnswer(i);
+    area.appendChild(btn);
+  });
+}
+
+function selectAnswer(chosen) {
+  if (answered) return;
+  answered = true;
+
+  const btns = document.querySelectorAll('.opt-btn');
+  const q = QUESTIONS[currentQ];
+  const isCorrect = (chosen === shuffledAnswer);
+
+  if (isCorrect) {
+    btns[chosen].classList.add('correct');
+    score += 2;
+  } else {
+    btns[chosen].classList.add('wrong');
+    btns[shuffledAnswer].classList.add('correct');
+  }
+  btns.forEach((b, i) => {
+    if (i !== chosen && i !== shuffledAnswer) b.classList.add('dimmed');
+    b.disabled = true;
+  });
+
+  const explainBox = document.getElementById('explain-box');
+  explainBox.textContent = (isCorrect ? '✅ 정답! ' : '❌ 오답! ') + q.explain;
+  explainBox.className = 'explain-box' + (isCorrect ? '' : ' wrong-explain');
+  explainBox.style.display = 'block';
+
+  document.getElementById('score-display').textContent = `${score}점`;
+  document.getElementById('next-btn').style.display = 'block';
+  document.getElementById('next-btn').textContent =
+    currentQ < QUESTIONS.length - 1 ? '다음 문제 →' : '결과 보기 🎯';
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ < QUESTIONS.length) {
+    loadQuestion();
+  } else {
+    showResult();
+  }
+}
+
+async function showResult() {
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+
+  document.getElementById('final-score-num').textContent = score;
+  document.getElementById('progress-fill').style.width = '100%';
+
+  let msg, sub;
+  if (score === 100) {
+    msg = '🎉 완벽해요! 100점!';
+    sub = `우리말 맞춤법 완전 정복! (${elapsed}초 소요)`;
+  } else if (score >= 90) {
+    msg = '🌟 훌륭해요!';
+    sub = `거의 다 맞혔어요! ${score}점 (${elapsed}초)`;
+  } else if (score >= 70) {
+    msg = '👍 잘했어요!';
+    sub = `조금 더 공부하면 만점! ${score}점 (${elapsed}초)`;
+  } else if (score >= 50) {
+    msg = '📚 아직 공부가 필요해요';
+    sub = `다시 도전해 보세요! ${score}점`;
+  } else {
+    msg = '💪 다시 도전!';
+    sub = `맞춤법을 더 공부해 봐요! ${score}점`;
+  }
+  document.getElementById('result-msg').textContent = msg;
+  document.getElementById('result-sub').textContent = sub;
+
+  // Check if 100점 and slots available
+  if (score === 100) {
+    await checkAndShowRegistration(elapsed);
+  }
+
+  loadLeaderboard('lb-list', 'lb-count');
+}
+
+async function checkAndShowRegistration(elapsed) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=count`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'count=exact',
+        'Range': '0-0'
+      }
+    });
+    const range = res.headers.get('Content-Range');
+    let count = 0;
+    if (range) {
+      const m = range.match(/\/(\d+)/);
+      if (m) count = parseInt(m[1]);
+    }
+
+    if (count < MAX_WINNERS) {
+      document.getElementById('reg-section').style.display = 'block';
+      // Store elapsed for submission
+      document.getElementById('submit-btn').dataset.elapsed = elapsed;
+    } else {
+      document.getElementById('closed-msg').style.display = 'block';
+    }
+  } catch (e) {
+    // Fallback: show registration anyway
+    document.getElementById('reg-section').style.display = 'block';
+    document.getElementById('submit-btn').dataset.elapsed = elapsed;
+  }
+}
+
+async function submitScore() {
+  const name = document.getElementById('reg-name').value.trim();
+  const studentId = document.getElementById('reg-id').value.trim();
+
+  if (!name) { showToast('이름을 입력해 주세요'); return; }
+  if (!studentId) { showToast('학번을 입력해 주세요'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '등록 중...';
+
+  const elapsed = parseInt(btn.dataset.elapsed) || 0;
+
+  try {
+    // Re-check count
+    const countRes = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=count`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'count=exact',
+        'Range': '0-0'
+      }
+    });
+    const range = countRes.headers.get('Content-Range');
+    let count = 0;
+    if (range) {
+      const m = range.match(/\/(\d+)/);
+      if (m) count = parseInt(m[1]);
+    }
+
+    if (count >= MAX_WINNERS) {
+      document.getElementById('reg-section').style.display = 'none';
+      document.getElementById('closed-msg').style.display = 'block';
+      showToast('아쉽게도 선착순이 마감되었습니다 😢');
+      return;
+    }
+
+    const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ name, student_id: studentId, score: 100, time_seconds: elapsed })
+    });
+
+    if (insertRes.ok) {
+      document.getElementById('reg-section').innerHTML =
+        `<div style="text-align:center;padding:16px 0;">
+          <div style="font-size:2.5rem;margin-bottom:10px;">🎊</div>
+          <div style="font-weight:800;font-size:1.1rem;color:var(--success);margin-bottom:6px;">시상 명단에 등록되었습니다!</div>
+          <div style="color:var(--muted);font-size:0.88rem;">${name} (${studentId})님, 축하합니다!</div>
+        </div>`;
+      showToast('🏆 등록 완료! 축하합니다!');
+      loadLeaderboard('lb-list', 'lb-count');
+    } else {
+      const err = await insertRes.text();
+      showToast('등록 오류: ' + err.slice(0, 50));
+      btn.disabled = false;
+      btn.textContent = '🏆 시상 명단 등록하기';
+    }
+  } catch (e) {
+    showToast('네트워크 오류가 발생했습니다');
+    btn.disabled = false;
+    btn.textContent = '🏆 시상 명단 등록하기';
+  }
+}
+
+async function loadLeaderboard(listId, countId) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=name,student_id,score,time_seconds,created_at&score=eq.100&order=created_at.asc&limit=${MAX_WINNERS}`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const data = await res.json();
+    const listEl = document.getElementById(listId);
+    const countEl = document.getElementById(countId);
+
+    if (countEl) countEl.textContent = `(${data.length}/${MAX_WINNERS}명)`;
+
+    if (!data.length) {
+      listEl.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;text-align:center;padding:10px 0;">아직 등록된 학생이 없습니다.</p>';
+      return;
+    }
+
+    const rankEmojis = ['🥇','🥈','🥉'];
+    const rowClasses = ['gold','silver','bronze'];
+    listEl.innerHTML = data.map((r, i) => {
+      const rank = i + 1;
+      const cls = i < 3 ? rowClasses[i] : '';
+      const rankStr = i < 3 ? rankEmojis[i] : `${rank}`;
+      const rankCls = i < 3 ? `r${rank}` : '';
+      return `<div class="lb-row ${cls}">
+        <div class="lb-rank ${rankCls}">${rankStr}</div>
+        <div class="lb-name">${r.name}</div>
+        <div class="lb-id">${r.student_id}</div>
+        <div class="lb-score">100점</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    const listEl = document.getElementById(listId);
+    if (listEl) listEl.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;text-align:center;">불러오기 실패</p>';
+  }
+}
+
+function retryQuiz() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'block';
+  loadLeaderboard('lb-list-start', 'lb-count-start');
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Init leaderboard on start
+loadLeaderboard('lb-list-start', 'lb-count-start');
+</script>
+</body>
+</html>
