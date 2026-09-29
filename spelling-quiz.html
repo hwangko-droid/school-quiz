@@ -532,7 +532,8 @@
         🏅 선착순 30명이 이미 마감되었습니다.<br>수고하셨습니다!
       </div>
 
-      <button class="retry-btn" onclick="retryQuiz()">🔄 다시 풀기</button>
+      <button class="retry-btn" id="retry-wrong-btn" style="display:none;background:#fee2e2;color:#b91c1c;border-color:#fca5a5;" onclick="startWrongOnly()">❌ 오답만 다시 풀기</button>
+      <button class="retry-btn" onclick="retryQuiz()">🔄 처음부터 다시 풀기</button>
     </div>
 
     <!-- Leaderboard -->
@@ -669,6 +670,9 @@ let score = 0;
 let answered = false;
 let shuffledAnswer = 0;
 let startTime = null;
+let wrongIndices = [];       // 오답 문제 원본 인덱스
+let activeQuestions = null;  // null=전체, 배열=오답 재시도
+let activeSections = null;
 
 function shuffleArray(arr) {
   const a = [...arr];
@@ -684,32 +688,53 @@ function startQuiz() {
   document.getElementById('quiz-screen').style.display = 'block';
   currentQ = 0;
   score = 0;
+  wrongIndices = [];
+  activeQuestions = QUESTIONS;
+  activeSections = SECTIONS;
+  startTime = Date.now();
+  loadQuestion();
+}
+
+function startWrongOnly() {
+  if (!wrongIndices.length) return;
+  // Build a filtered set from original wrong answers
+  activeQuestions = wrongIndices.map(i => QUESTIONS[i]);
+  activeSections = wrongIndices.map(i => SECTIONS[i]);
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  currentQ = 0;
+  score = 0;
+  wrongIndices = [];
   startTime = Date.now();
   loadQuestion();
 }
 
 function loadQuestion() {
   answered = false;
-  const q = QUESTIONS[currentQ];
+  const q = activeQuestions[currentQ];
   const idx = currentQ;
+  const total = activeQuestions.length;
 
-  document.getElementById('q-num').textContent = `문제 ${idx + 1}`;
-  document.getElementById('section-label').textContent = SECTIONS[idx];
+  const isRetryMode = (total < QUESTIONS.length);
+  document.getElementById('q-num').textContent = isRetryMode
+    ? `오답 재도전 ${idx + 1}`
+    : `문제 ${idx + 1}`;
+  document.getElementById('section-label').textContent = activeSections[idx];
   document.getElementById('q-text').textContent = q.q;
   document.getElementById('explain-box').style.display = 'none';
   document.getElementById('explain-box').className = 'explain-box';
   document.getElementById('next-btn').style.display = 'none';
 
   // Progress
-  const pct = (idx / QUESTIONS.length) * 100;
+  const pct = (idx / total) * 100;
   document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('q-counter').textContent = `${idx + 1} / ${QUESTIONS.length}`;
+  document.getElementById('q-counter').textContent = `${idx + 1} / ${total}`;
   document.getElementById('score-display').textContent = `${score}점`;
 
   // Shuffle options
   const optIndices = shuffleArray([0, 1]);
-  const shuffledOptions = optIndices.map(i => q.options[i]);
-  shuffledAnswer = optIndices.indexOf(q.answer);
+  const shuffledOptions = optIndices.map(i => activeQuestions[currentQ].options[i]);
+  shuffledAnswer = optIndices.indexOf(activeQuestions[currentQ].answer);
 
   const area = document.getElementById('options-area');
   area.innerHTML = '';
@@ -728,7 +753,7 @@ function selectAnswer(chosen) {
   answered = true;
 
   const btns = document.querySelectorAll('.opt-btn');
-  const q = QUESTIONS[currentQ];
+  const q = activeQuestions[currentQ];
   const isCorrect = (chosen === shuffledAnswer);
 
   if (isCorrect) {
@@ -737,6 +762,8 @@ function selectAnswer(chosen) {
   } else {
     btns[chosen].classList.add('wrong');
     btns[shuffledAnswer].classList.add('correct');
+    // 오답 추적 (activeQuestions 기준 원본 인덱스 저장)
+    wrongIndices.push(currentQ);
   }
   btns.forEach((b, i) => {
     if (i !== chosen && i !== shuffledAnswer) b.classList.add('dimmed');
@@ -751,12 +778,12 @@ function selectAnswer(chosen) {
   document.getElementById('score-display').textContent = `${score}점`;
   document.getElementById('next-btn').style.display = 'block';
   document.getElementById('next-btn').textContent =
-    currentQ < QUESTIONS.length - 1 ? '다음 문제 →' : '결과 보기 🎯';
+    currentQ < activeQuestions.length - 1 ? '다음 문제 →' : '결과 보기 🎯';
 }
 
 function nextQuestion() {
   currentQ++;
-  if (currentQ < QUESTIONS.length) {
+  if (currentQ < activeQuestions.length) {
     loadQuestion();
   } else {
     showResult();
@@ -768,32 +795,46 @@ async function showResult() {
   document.getElementById('quiz-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'block';
 
+  // 전체 50문제 기준 실제 100점 여부
+  const totalQs = activeQuestions.length;
+  const maxScore = totalQs * 2;
+  const isPerfect = (score === maxScore && activeQuestions === QUESTIONS);
+
   document.getElementById('final-score-num').textContent = score;
   document.getElementById('progress-fill').style.width = '100%';
 
+  // 오답 재도전 버튼 업데이트
+  const retryWrongBtn = document.getElementById('retry-wrong-btn');
+  if (wrongIndices.length > 0) {
+    retryWrongBtn.style.display = 'block';
+    retryWrongBtn.textContent = `❌ 오답 ${wrongIndices.length}문제만 다시 풀기`;
+  } else {
+    retryWrongBtn.style.display = 'none';
+  }
+
   let msg, sub;
-  if (score === 100) {
+  if (isPerfect) {
     msg = '🎉 완벽해요! 100점!';
     sub = `우리말 맞춤법 완전 정복! (${elapsed}초 소요)`;
-  } else if (score >= 90) {
-    msg = '🌟 훌륭해요!';
-    sub = `거의 다 맞혔어요! ${score}점 (${elapsed}초)`;
-  } else if (score >= 70) {
-    msg = '👍 잘했어요!';
-    sub = `조금 더 공부하면 만점! ${score}점 (${elapsed}초)`;
-  } else if (score >= 50) {
-    msg = '📚 아직 공부가 필요해요';
-    sub = `다시 도전해 보세요! ${score}점`;
+  } else if (score === maxScore) {
+    msg = '🎊 오답 전부 정복!';
+    sub = `오답 재도전 완료! (${elapsed}초 소요)`;
   } else {
-    msg = '💪 다시 도전!';
-    sub = `맞춤법을 더 공부해 봐요! ${score}점`;
+    const pct = Math.round((score / maxScore) * 100);
+    if (pct >= 90) { msg = '🌟 훌륭해요!'; sub = `거의 다 맞혔어요! ${score}/${maxScore}점 (${elapsed}초)`; }
+    else if (pct >= 70) { msg = '👍 잘했어요!'; sub = `조금 더 공부하면 만점! ${score}/${maxScore}점 (${elapsed}초)`; }
+    else if (pct >= 50) { msg = '📚 아직 공부가 필요해요'; sub = `다시 도전해 보세요! ${score}/${maxScore}점`; }
+    else { msg = '💪 다시 도전!'; sub = `맞춤법을 더 공부해 봐요! ${score}/${maxScore}점`; }
   }
   document.getElementById('result-msg').textContent = msg;
   document.getElementById('result-sub').textContent = sub;
 
-  // Check if 100점 and slots available
-  if (score === 100) {
+  // Check if 100점 (전체 50문제 만점) and slots available
+  if (isPerfect) {
     await checkAndShowRegistration(elapsed);
+  } else {
+    document.getElementById('reg-section').style.display = 'none';
+    document.getElementById('closed-msg').style.display = 'none';
   }
 
   loadLeaderboard('lb-list', 'lb-count');
@@ -938,6 +979,9 @@ async function loadLeaderboard(listId, countId) {
 }
 
 function retryQuiz() {
+  activeQuestions = QUESTIONS;
+  activeSections = SECTIONS;
+  wrongIndices = [];
   document.getElementById('result-screen').style.display = 'none';
   document.getElementById('start-screen').style.display = 'block';
   loadLeaderboard('lb-list-start', 'lb-count-start');
