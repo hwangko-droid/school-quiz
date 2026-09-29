@@ -795,12 +795,12 @@ async function showResult() {
   document.getElementById('quiz-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'block';
 
-  // 전체 50문제 기준 실제 100점 여부
   const totalQs = activeQuestions.length;
   const maxScore = totalQs * 2;
-  const isPerfect = (score === maxScore && activeQuestions === QUESTIONS);
+  const isRetryMode = (activeQuestions !== QUESTIONS);
+  const isPerfect = (score === maxScore);  // 전체/오답재도전 모두 만점이면 등록 가능
 
-  document.getElementById('final-score-num').textContent = score;
+  document.getElementById('final-score-num').textContent = isRetryMode ? '오답 전부 정복!' : score;
   document.getElementById('progress-fill').style.width = '100%';
 
   // 오답 재도전 버튼 업데이트
@@ -813,12 +813,12 @@ async function showResult() {
   }
 
   let msg, sub;
-  if (isPerfect) {
+  if (isPerfect && !isRetryMode) {
     msg = '🎉 완벽해요! 100점!';
     sub = `우리말 맞춤법 완전 정복! (${elapsed}초 소요)`;
-  } else if (score === maxScore) {
+  } else if (isPerfect && isRetryMode) {
     msg = '🎊 오답 전부 정복!';
-    sub = `오답 재도전 완료! (${elapsed}초 소요)`;
+    sub = `틀린 문제를 모두 맞혔어요! 명예의 전당 등록 가능! (${elapsed}초 소요)`;
   } else {
     const pct = Math.round((score / maxScore) * 100);
     if (pct >= 90) { msg = '🌟 훌륭해요!'; sub = `거의 다 맞혔어요! ${score}/${maxScore}점 (${elapsed}초)`; }
