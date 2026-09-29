@@ -397,6 +397,35 @@
     color: var(--muted);
   }
   .ss-item strong { color: var(--primary); display: block; font-size: 0.7rem; margin-bottom: 2px; }
+
+  /* ── 시작 시간 게이트 ── */
+  #time-gate {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #3b82f6 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: white; text-align: center; padding: 24px;
+  }
+  #time-gate h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; opacity: .9; }
+  #time-gate .gate-open-time {
+    font-size: 2.6rem; font-weight: 900; letter-spacing: 2px;
+    background: rgba(255,255,255,.15); border-radius: 16px;
+    padding: 10px 28px; margin: 12px 0;
+  }
+  #time-gate .gate-countdown-label { font-size: 0.85rem; opacity: .75; margin-bottom: 6px; }
+  #time-gate .gate-countdown {
+    font-size: 3.8rem; font-weight: 900; letter-spacing: 4px;
+    font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
+    line-height: 1;
+  }
+  #time-gate .gate-now {
+    font-size: 0.8rem; opacity: .6; margin-top: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  #time-gate .gate-ready {
+    font-size: 1.6rem; font-weight: 900; animation: pulse 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes pulse { from { opacity: 1; transform: scale(1); } to { opacity: .6; transform: scale(1.05); } }
 </style>
 </head>
 <body>
@@ -501,7 +530,67 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- 시작 시간 게이트 (URL ?open=HH:MM 이 있을 때만 표시) -->
+<div id="time-gate" style="display:none">
+  <h2>📝 나도 맞춤법퀴즈왕</h2>
+  <p style="opacity:.7;font-size:.85rem;margin-bottom:10px">퀴즈 시작 시간</p>
+  <div class="gate-open-time" id="gate-open-time">—</div>
+  <div class="gate-countdown-label">남은 시간</div>
+  <div class="gate-countdown" id="gate-countdown">--:--</div>
+  <div class="gate-now" id="gate-now">현재 시각: --:--:--</div>
+</div>
+
 <script>
+// ── 시작 시간 게이트 ─────────────────────────────────
+(function initGate() {
+  const params = new URLSearchParams(location.search);
+  const openParam = params.get('open'); // e.g. "15:00" or "09:30"
+  if (!openParam) return;
+
+  const gate = document.getElementById('time-gate');
+  gate.style.display = 'flex';
+
+  const [hStr, mStr] = openParam.split(':');
+  const openH = parseInt(hStr, 10);
+  const openM = parseInt(mStr, 10);
+  if (isNaN(openH) || isNaN(mStr)) { gate.style.display = 'none'; return; }
+
+  document.getElementById('gate-open-time').textContent =
+    String(openH).padStart(2,'0') + ':' + String(openM).padStart(2,'0');
+
+  const pad = n => String(n).padStart(2,'0');
+
+  function getOpenMs() {
+    const now = new Date();
+    const open = new Date(now);
+    open.setHours(openH, openM, 0, 0);
+    return open - now;
+  }
+
+  function tick() {
+    const diff = getOpenMs();
+    const now = new Date();
+    document.getElementById('gate-now').textContent =
+      '현재 시각: ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+
+    if (diff <= 0) {
+      // 시간 도달 → 게이트 해제
+      gate.innerHTML = '<div class="gate-ready">🎉 퀴즈 시작! 화면을 탭하세요</div>';
+      setTimeout(() => { gate.style.display = 'none'; }, 1500);
+      return;
+    }
+
+    const totalSec = Math.ceil(diff / 1000);
+    const mm = Math.floor(totalSec / 60);
+    const ss = totalSec % 60;
+    document.getElementById('gate-countdown').textContent = pad(mm) + ':' + pad(ss);
+    setTimeout(tick, 500);
+  }
+
+  tick();
+})();
+
+// ────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://pkslwnwjdxczxyhulfqj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrc2x3bndqZHhjenh5aHVsZnFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjU4NjksImV4cCI6MjEwNDk0MTg2OX0.nxNBOrli8GCRvUgyBhX4UErN67sVnIpF44Qz-URSOiM';
 const TABLE = 'spelling_quiz';
